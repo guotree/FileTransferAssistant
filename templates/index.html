@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}EasySync{% endblock %}
+
+{% block content %}
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">EasySync: Welcome, {{ current_user.username }}!</h1>
+        <div>
+            <a href="{{ url_for('delete_all') }}" class="delete-link">Delete All</a>
+            <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="dashboard-section">
+            <h2>File Management</h2>
+            
+            <h3>Upload File</h3>
+            <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                {{ upload_form.hidden_tag() }}
+                <div>
+                    {{ upload_form.file.label }}<br>
+                    {{ upload_form.file() }}
+                    {% for error in upload_form.file.errors %}
+                        <span style="color: var(--accent-color);">[{{ error }}]</span>
+                    {% endfor %}
+                </div>
+                <div>{{ upload_form.submit() }}</div>
+            </form>
+        
+            <h3>Your Files</h3>
+            {% if files %}
+                <ul class="file-list">
+                {% for file in files %}
+                    <li class="file-item">
+                        <div class="file-name">
+                            <a href="{{ url_for('download_file', file_id=file.id) }}" class="file-link">{{ file.filename }}</a>
+                        </div>
+                        <div class="file-info">
+                            Uploaded on: {{ file.upload_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="no-files">You haven't uploaded any files yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="dashboard-section">
+            <h2>Message Center</h2>
+            
+            <h3>Send Message</h3>
+            <form method="POST" action="{{ url_for('send_message') }}">
+                {{ message_form.hidden_tag() }}
+                <div>
+                    {{ message_form.content.label }}<br>
+                    {{ message_form.content(rows=4, cols=50) }}
+                    {% for error in message_form.content.errors %}
+                        <span style="color: var(--accent-color);">[{{ error }}]</span>
+                    {% endfor %}
+                </div>
+                <div>{{ message_form.submit() }}</div>
+            </form>
+        
+            <h3>Your Messages</h3>
+            {% if messages %}
+                <ul class="message-list">
+                {% for message in messages %}
+                    <li class="message-item">
+                        <div class="message-content">{{ message.content }}</div>
+                        <div class="message-timestamp">
+                            Sent on: {{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="no-messages">You haven't sent any messages yet.</p>
+            {% endif %}
+        </div>
+{% endblock %}

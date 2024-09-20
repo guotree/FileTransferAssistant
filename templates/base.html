@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}File Transfer Assistant{% endblock %}</title>
+    <link rel="stylesheet" href="../static/styles.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            function fadeOut(element) {
+                element.style.opacity = 1;
+                (function fade() {
+                    if ((element.style.opacity -= .1) < 0) {
+                        element.style.display = 'none';
+                    } else {
+                        requestAnimationFrame(fade);
+                    }
+                })();
+            }
+        
+            function closeFlash(flashElement) {
+                fadeOut(flashElement);
+            }
+        
+            document.querySelectorAll('.flash').forEach(flash => {
+                const closeBtn = flash.querySelector('.close-btn');
+                closeBtn.addEventListener('click', () => closeFlash(flash));
+        
+                if (flash.hasAttribute('data-auto-dismiss')) {
+                    setTimeout(() => closeFlash(flash), 2000);
+                }
+            });
+        });
+        </script>        
+</head>
+<body>
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash" data-auto-dismiss>
+                        {{ message }}
+                        <button class="close-btn">&times;</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

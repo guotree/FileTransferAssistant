@@ -1,5 +1,4 @@
 # File Transfer Assistant
-#### Video Demo:  <URL [HERE](https://youtu.be/ppaG9ubJrHU)>
 #### Description:
 ##### Background
 The motivation behind developing this web app is that I frequently need to send a text snippet or a small file from my phone to someone's computer, without wanting to log into my regular messaging accounts (e.g., Telegram, WeChat) on their device. Sometimes, the direction is reversed, so I require a medium for file transfer independent of messaging apps.

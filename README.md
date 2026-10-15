@@ -36,22 +36,23 @@ Here is the structure of my final project.
 ```
 project
 ├── README.md
-├── app.db
+├── .gitignore
+├── app.db            (generated at runtime)
 ├── app.py
 ├── config.py
 ├── forms.py
 ├── models.py
 ├── requirements.txt
+├── smoke_test.py     (run with `python smoke_test.py` to verify the app)
 ├── static
 │   ├── main.js
-│   ├── styles.css
-│   └── uploads
-│       └── Welcome.md
+│   └── styles.css
 ├── templates
 │   ├── base.html
 │   ├── index.html
 │   ├── login.html
 │   └── register.html
+├── uploads           (generated at runtime, one folder per user)
 └── utils.py
 
 ```
@@ -64,15 +65,15 @@ project
    -  `user`: this table contains user IDs, usernames, and hashed passwords. Usernames are unique.
    -  `message`: this table contains message IDs, message contents, timestamps, user IDs.
    -  `file`: this table contains file IDs, file names, file paths, user IDs, upload times and the file names are unique.
-3. `./config.py` stores the path of the database and the path of upload files
+3. `./config.py` stores the path of the database and the path of upload files. The `SECRET_KEY` can be overridden with the `SECRET_KEY` environment variable (the built-in value is only for local development).
 4. `./forms.py` it defines four different forms for a Flask web application using Flask-WTF. Here's a brief explanation of each form:
    1. **LoginForm**: This form is used for logging in. 
    2. **RegistrationForm**: This form is used for user registration.
    3. **UploadForm**: This form is for file uploads.
    4. **MessageForm**: This form is for sending messages. 
 4. `./models.py` it sets up a basic model structure for a Flask application using Flask-SQLAlchemy for database interactions and Flask-Login for user authentication. User Model, File Model and Message Model are connected to user table, file table and message table.
-5. `./utils.py` contains some tools for `./app.py`
+5. `./utils.py` provides `safe_filename()`, which strips directory components and unsafe characters from client-supplied filenames (preventing path traversal) while keeping non-ASCII characters.
 6. `./requirements.txt` it lists the python packages we need to use.
-7. `./static/uploads/` stores uploaded files for each user.
+7. `./uploads/<user_id>/` stores uploaded files for each user. It lives outside `static/`, so uploaded files are never reachable as public web assets.
 8. `./static/style.css` is the style file.
 9. `./templates/` are html files

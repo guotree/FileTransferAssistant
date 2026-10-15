@@ -80,6 +80,7 @@ a:hover {
 }
 
 .flash {
+    position: relative;
     padding: 10px;
     margin-bottom: 10px;
     background-color: var(--primary-color);
@@ -109,13 +110,16 @@ a:hover {
     }
 }
 
-.logout-link {
+.logout-link, .delete-link {
     display: inline-block;
     margin-bottom: 20px;
     padding: 10px 15px;
     background-color: var(--accent-color);
     color: white;
+    border: none;
     border-radius: 4px;
+    font: inherit;
+    cursor: pointer;
     transition: background-color 0.3s;
 }
 
@@ -124,19 +128,9 @@ a:hover {
     color: white;
 }
 
-.delete-link {
+.header-form {
     display: inline-block;
-    margin-bottom: 20px;
-    padding: 10px 15px;
-    background-color: var(--accent-color);
-    color: white;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-}
-
-.delete-link:hover {
-    background-color: #c0392b;
-    color: white;
+    margin: 0;
 }
 
 .dashboard-header {

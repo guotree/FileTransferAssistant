@@ -5,9 +5,16 @@
 {% block content %}
     <div class="dashboard-header">
         <h1 class="dashboard-title">EasySync: Welcome, {{ current_user.username }}!</h1>
-        <div>
-            <a href="{{ url_for('delete_all') }}" class="delete-link">Delete All</a>
-            <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+        <div class="header-actions">
+            <form method="POST" action="{{ url_for('delete_all') }}" class="header-form"
+                  onsubmit="return confirm('Delete all your files and messages?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="delete-link">Delete All</button>
+            </form>
+            <form method="POST" action="{{ url_for('logout') }}" class="header-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="logout-link">Logout</button>
+            </form>
         </div>
     </div>
 

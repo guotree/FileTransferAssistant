@@ -20,10 +20,16 @@ class User(UserMixin, db.Model):
 
 class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(256), nullable=False,unique=True)
+    filename = db.Column(db.String(256), nullable=False)
     filepath = db.Column(db.String(256), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     upload_time = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Names only have to be unique per user, so two users can both send
+    # "report.pdf" without blocking (or overwriting) each other.
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'filename', name='uq_file_user_filename'),
+    )
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)

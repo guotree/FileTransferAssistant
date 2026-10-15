@@ -1,22 +1,30 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from werkzeug.utils import secure_filename
 import os
+from flask import Flask, render_template, redirect, url_for, send_file, flash
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask_wtf.csrf import CSRFProtect, CSRFError
+from sqlalchemy.exc import IntegrityError
 from models import db, User, File, Message
 from forms import LoginForm, RegistrationForm, UploadForm, MessageForm
 from config import Config
-from utils import encrypt_file, decrypt_file, secure_filename, restore_filename
+from utils import safe_filename
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 db.init_app(app)
+csrf = CSRFProtect(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    flash('The form has expired. Please try again.')
+    return redirect('/')
+
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 @app.route('/')
 @login_required
@@ -54,7 +62,7 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
 
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
@@ -64,16 +72,36 @@ def logout():
 @login_required
 def upload_file():
     form = UploadForm()
-    if form.validate_on_submit():
-        file = form.file.data
-        # filename = secure_filename(file.filename)
-        filename = file.filename
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        new_file = File(filename=filename, filepath=filepath, owner=current_user)
-        db.session.add(new_file)
+    if not form.validate_on_submit():
+        # Surface validation failures (missing file, bad CSRF token, ...)
+        # instead of silently redirecting.
+        for errors in form.errors.values():
+            for error in errors:
+                flash(error)
+        return redirect("/")
+
+    filename = safe_filename(form.file.data.filename)
+    user_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(current_user.id))
+    os.makedirs(user_dir, exist_ok=True)
+    filepath = os.path.join(user_dir, filename)
+
+    # Refuse same-name files instead of overwriting them (and never let a
+    # crafted filename escape user_dir: safe_filename removed separators).
+    if os.path.exists(filepath) or File.query.filter_by(user_id=current_user.id, filename=filename).first():
+        flash('A file with the same name already exists')
+        return redirect("/")
+
+    form.file.data.save(filepath)
+    db.session.add(File(filename=filename, filepath=filepath, owner=current_user))
+    try:
         db.session.commit()
-        flash('File uploaded successfully')
+    except IntegrityError:
+        db.session.rollback()
+        if os.path.isfile(filepath):
+            os.remove(filepath)
+        flash('A file with the same name already exists')
+        return redirect("/")
+    flash('File uploaded successfully')
     return redirect("/")
 
 @app.route('/download/<int:file_id>')
@@ -82,19 +110,13 @@ def download_file(file_id):
     file = File.query.get_or_404(file_id)
     if file.owner != current_user:
         flash('You do not have permission to download this file')
-        return redirect("/") 
-    # decrypt_file(file.filepath)
-    try:
-        return_value = send_file(file.filepath, 
-                                 as_attachment=True, 
-                                 download_name=file.filename)
-    except TypeError:
-        return_value = send_file(file.filepath, 
-                                 as_attachment=True, 
-                                 attachment_filename=file.filename)
-    
-    # encrypt_file(file.filepath)
-    return return_value
+        return redirect("/")
+    if not os.path.isfile(file.filepath):
+        flash('The file is no longer available on the server')
+        return redirect("/")
+    return send_file(file.filepath,
+                     as_attachment=True,
+                     download_name=file.filename)
 
 @app.route('/send_message', methods=['POST'])
 @login_required
@@ -105,30 +127,46 @@ def send_message():
         db.session.add(message)
         db.session.commit()
         flash('Message sent')
+    else:
+        for errors in form.errors.values():
+            for error in errors:
+                flash(error)
     return redirect("/")
 
 
-@app.route("/delete_file", methods=["GET"])
-def delete_file():
-    files_to_delete = File.query.filter(File.user_id==current_user.id).all()
-    for file in files_to_delete:
-        os.remove(file.filepath)
+def delete_user_files(user):
+    user_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(user.id))
+    for file in File.query.filter_by(user_id=user.id).all():
+        if os.path.isfile(file.filepath):
+            os.remove(file.filepath)
         db.session.delete(file)
     db.session.commit()
-    return redirect("/")
+    if os.path.isdir(user_dir) and not os.listdir(user_dir):
+        os.rmdir(user_dir)
 
-@app.route("/delete_message", methods=["GET"])
-def delete_message():
-    messages_to_delete = Message.query.filter(Message.user_id==current_user.id).all()
-    for message in messages_to_delete:
-        db.session.delete(message)
+
+def delete_user_messages(user):
+    Message.query.filter_by(user_id=user.id).delete(synchronize_session=False)
     db.session.commit()
+
+
+@app.route("/delete_file", methods=["POST"])
+@login_required
+def delete_file():
+    delete_user_files(current_user)
     return redirect("/")
 
-@app.route("/delete_all", methods=["GET"])
+@app.route("/delete_message", methods=["POST"])
+@login_required
+def delete_message():
+    delete_user_messages(current_user)
+    return redirect("/")
+
+@app.route("/delete_all", methods=["POST"])
+@login_required
 def delete_all():
-    delete_message()
-    delete_file()
+    delete_user_messages(current_user)
+    delete_user_files(current_user)
     flash("All the files and messages are deleted!")
     return redirect("/")
 

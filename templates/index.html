@@ -20,7 +20,14 @@
 
     <div class="dashboard-container">
         <div class="dashboard-section">
-            <h2>File Management</h2>
+            <div class="section-heading">
+                <h2>File Management</h2>
+                <form method="POST" action="{{ url_for('delete_file') }}" class="header-form"
+                      onsubmit="return confirm('Delete all your files?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="delete-link">Clear Files</button>
+                </form>
+            </div>
             
             <h3>Upload File</h3>
             <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
@@ -55,7 +62,14 @@
         </div>
 
         <div class="dashboard-section">
-            <h2>Message Center</h2>
+            <div class="section-heading">
+                <h2>Message Center</h2>
+                <form method="POST" action="{{ url_for('delete_message') }}" class="header-form"
+                      onsubmit="return confirm('Delete all your messages?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="delete-link">Clear Messages</button>
+                </form>
+            </div>
             
             <h3>Send Message</h3>
             <form method="POST" action="{{ url_for('send_message') }}">
@@ -75,9 +89,12 @@
                 <ul class="message-list">
                 {% for message in messages %}
                     <li class="message-item">
-                        <div class="message-content">{{ message.content }}</div>
-                        <div class="message-timestamp">
-                            Sent on: {{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                        <div class="message-content" id="message-{{ message.id }}">{{ message.content }}</div>
+                        <div class="message-meta">
+                            <div class="message-timestamp">
+                                Sent on: {{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </div>
+                            <button type="button" class="copy-btn" data-target="message-{{ message.id }}">Copy</button>
                         </div>
                     </li>
                 {% endfor %}

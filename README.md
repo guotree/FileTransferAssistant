@@ -15,9 +15,9 @@ If you successfully log in, you will see the dashboard of my web application. Th
 
 In the file management area, you can browse for local files, select them, and click Upload. Then you will see a notification "File uploaded successfully", and the uploaded file appears in the *Your Files* area with a timestamp. If you click the file name, you can download it to your local. The server will refuse the file with the same name.
 
-In the Message Center, you can type your message and click send. Then you will see a notification "Message sent", and the message will appear in the *Your Messages* area with a timestamp. And you can copy the text.
+In the Message Center, you can type your message and click send. Then you will see a notification "Message sent", and the message will appear in the *Your Messages* area with a timestamp. Click **Copy** beside a message to copy its text.
 
-There is also a button to delete all the files and messages for the current account on the server. I recommend you delete all the files and messages if you finish your file transfer for data security.
+You can clear all files, all messages, or both for the current account using the buttons in the corresponding sections. I recommend clearing transferred data when you finish.
 
 Of course, there is a button for logout. If you click it, the server will redirect you to `127.0.0.1:5000/login`
 
@@ -45,7 +45,6 @@ project
 ├── requirements.txt
 ├── smoke_test.py     (run with `python smoke_test.py` to verify the app)
 ├── static
-│   ├── main.js
 │   └── styles.css
 ├── templates
 │   ├── base.html
@@ -75,5 +74,5 @@ project
 5. `./utils.py` provides `safe_filename()`, which strips directory components and unsafe characters from client-supplied filenames (preventing path traversal) while keeping non-ASCII characters.
 6. `./requirements.txt` it lists the python packages we need to use.
 7. `./uploads/<user_id>/` stores uploaded files for each user. It lives outside `static/`, so uploaded files are never reachable as public web assets.
-8. `./static/style.css` is the style file.
+8. `./static/styles.css` is the style file.
 9. `./templates/` are html files

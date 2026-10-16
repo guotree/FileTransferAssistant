@@ -10,3 +10,5 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # Lives outside static/ so uploaded files are never served as public assets.
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or os.path.join(BASE_DIR, 'uploads')
+    # Reject oversized requests at the WSGI level instead of buffering them.
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 50 * 1024 * 1024))  # 50 MB

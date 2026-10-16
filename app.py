@@ -3,6 +3,7 @@ from flask import Flask, render_template, redirect, url_for, send_file, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from sqlalchemy.exc import IntegrityError
+from werkzeug.exceptions import RequestEntityTooLarge
 from models import db, User, File, Message
 from forms import LoginForm, RegistrationForm, UploadForm, MessageForm
 from config import Config
@@ -20,6 +21,11 @@ login_manager.login_view = 'login'
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     flash('The form has expired. Please try again.')
+    return redirect('/')
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_too_large(e):
+    flash('File is too large (max 50 MB)')
     return redirect('/')
 
 @login_manager.user_loader
@@ -57,7 +63,12 @@ def register():
         user = User(username=form.username.data)
         user.set_password(form.password.data)
         db.session.add(user)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash('Username already exists')
+            return render_template('register.html', form=form)
         flash('Registration successful. Please log in.')
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
@@ -154,12 +165,14 @@ def delete_user_messages(user):
 @login_required
 def delete_file():
     delete_user_files(current_user)
+    flash('All files are deleted')
     return redirect("/")
 
 @app.route("/delete_message", methods=["POST"])
 @login_required
 def delete_message():
     delete_user_messages(current_user)
+    flash('All messages are deleted')
     return redirect("/")
 
 @app.route("/delete_all", methods=["POST"])

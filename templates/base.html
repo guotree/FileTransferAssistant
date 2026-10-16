@@ -30,6 +30,17 @@
                     setTimeout(() => closeFlash(flash), 2000);
                 }
             });
+
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const text = document.getElementById(btn.dataset.target).innerText;
+                    navigator.clipboard.writeText(text).then(() => {
+                        const old = btn.textContent;
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => { btn.textContent = old; }, 1500);
+                    });
+                });
+            });
         });
         </script>        
 </head>
